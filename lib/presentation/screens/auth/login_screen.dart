@@ -17,7 +17,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'demo@cuongtran.notes');
+  final _emailController = TextEditingController(text: 'cuongpro0145@gmail.com');
   final _passwordController = TextEditingController(text: 'password123');
 
   @override
@@ -44,8 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       body: SafeArea(
@@ -84,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Sign in to sync your notes with Firebase Realtime',
+                    'Đăng nhập để đồng bộ ghi chú đám mây',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -106,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Dev Mode: Firebase keys not set. Local mock mode is active with demo credentials.',
+                              'Dev Mode: Chưa nhận key. Đang hoạt động ở chế độ mô phỏng offline.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.warning,
@@ -118,33 +116,38 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ],
-                  if (auth.errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.errorBg,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.error.withAlpha(80)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, size: 18, color: AppColors.error),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              auth.errorMessage!,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.error,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                  Consumer<AuthProvider>(
+                    builder: (context, auth, _) {
+                      if (auth.errorMessage != null) {
+                        return Container(
+                          margin: const EdgeInsets.only(top: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.errorBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.error.withAlpha(80)),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, size: 18, color: AppColors.error),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  auth.errorMessage!,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
                   const SizedBox(height: 28),
                   AppTextField(
                     controller: _emailController,
@@ -180,10 +183,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 28),
-                  PrimaryButton(
-                    text: 'Sign In',
-                    isLoading: auth.isLoading,
-                    onPressed: _handleLogin,
+                  Consumer<AuthProvider>(
+                    builder: (context, auth, _) {
+                      return PrimaryButton(
+                        text: 'Sign In',
+                        isLoading: auth.isLoading,
+                        onPressed: _handleLogin,
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -198,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          auth.clearError();
+                          context.read<AuthProvider>().clearError();
                           Navigator.pushNamed(context, AppRoutes.register);
                         },
                         child: const Text(

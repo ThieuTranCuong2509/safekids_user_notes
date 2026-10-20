@@ -18,8 +18,6 @@ class _GamesHubScreenState extends State<GamesHubScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gamesProvider = context.watch<GamesProvider>();
-
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       appBar: AppBar(
@@ -180,7 +178,6 @@ class _GamesHubScreenState extends State<GamesHubScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            // Game filter tabs
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -194,71 +191,76 @@ class _GamesHubScreenState extends State<GamesHubScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            if (gamesProvider.isLoading)
-              const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
-            else if (gamesProvider.topScores.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Chưa có kỷ lục nào. Hãy chơi ngay ván đầu tiên!',
-                    style: TextStyle(color: AppColors.textSecondary),
+            Consumer<GamesProvider>(
+              builder: (context, gamesProvider, _) {
+                if (gamesProvider.isLoading && gamesProvider.topScores.isEmpty) {
+                  return const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()));
+                }
+                if (gamesProvider.topScores.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Chưa có kỷ lục nào. Hãy chơi ngay ván đầu tiên!',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ),
+                  );
+                }
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
                   ),
-                ),
-              )
-            else
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: gamesProvider.topScores.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
-                  itemBuilder: (context, index) {
-                    final item = gamesProvider.topScores[index];
-                    final rankIcon = index == 0 ? '🥇' : (index == 1 ? '🥈' : (index == 2 ? '🥉' : '#${index + 1}'));
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: gamesProvider.topScores.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                    itemBuilder: (context, index) {
+                      final item = gamesProvider.topScores[index];
+                      final rankIcon = index == 0 ? '🥇' : (index == 1 ? '🥈' : (index == 2 ? '🥉' : '#${index + 1}'));
 
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: index < 3 ? AppColors.primaryLight : const Color(0xFFF5F5F5),
-                        child: Text(
-                          rankIcon,
-                          style: TextStyle(
-                            fontSize: index < 3 ? 18 : 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: index < 3 ? AppColors.primaryLight : const Color(0xFFF5F5F5),
+                          child: Text(
+                            rankIcon,
+                            style: TextStyle(
+                              fontSize: index < 3 ? 18 : 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      title: Text(
-                        item.userName,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
-                      subtitle: Text(
-                        '${item.gameType == 'flappy_bird' ? 'Flappy Bird' : (item.gameType == 'memory_match' ? 'Memory Flip' : 'Math Blitz')} • ${item.timeSpentSeconds}s',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                      ),
-                      trailing: Text(
-                        '${item.score} pts',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
+                        title: Text(
+                          item.userName,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                        subtitle: Text(
+                          '${item.gameType == 'flappy_bird' ? 'Flappy Bird' : (item.gameType == 'memory_match' ? 'Memory Flip' : 'Math Blitz')} • ${item.timeSpentSeconds}s',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                        trailing: Text(
+                          '${item.score} pts',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -275,6 +277,7 @@ class _GamesHubScreenState extends State<GamesHubScreen> {
       onSelected: (selected) {
         if (selected) {
           setState(() => _selectedGameType = type);
+          context.read<GamesProvider>().filterGame(type);
         }
       },
     );

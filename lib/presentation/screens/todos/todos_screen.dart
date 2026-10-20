@@ -119,9 +119,6 @@ class _TodosScreenState extends State<TodosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final todosProvider = context.watch<TodosProvider>();
-    final todos = todosProvider.todos;
-
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       appBar: AppBar(
@@ -138,20 +135,27 @@ class _TodosScreenState extends State<TodosScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                children: [
-                  _statBadge('Tổng số', '${todos.length}', AppColors.textPrimary),
-                  const SizedBox(width: 8),
-                  _statBadge('Chưa xong', '${todosProvider.pendingCount}', Colors.orange),
-                  const SizedBox(width: 8),
-                  _statBadge('Đã xong', '${todosProvider.completedCount}', Colors.green),
-                ],
+              child: Consumer<TodosProvider>(
+                builder: (context, todosProvider, _) {
+                  return Row(
+                    children: [
+                      _statBadge('Tổng số', '${todosProvider.todos.length}', AppColors.textPrimary),
+                      const SizedBox(width: 8),
+                      _statBadge('Chưa xong', '${todosProvider.pendingCount}', Colors.orange),
+                      const SizedBox(width: 8),
+                      _statBadge('Đã xong', '${todosProvider.completedCount}', Colors.green),
+                    ],
+                  );
+                },
               ),
             ),
             const Divider(height: 1, color: AppColors.border),
             Expanded(
-              child: todos.isEmpty
-                  ? Center(
+              child: Consumer<TodosProvider>(
+                builder: (context, todosProvider, _) {
+                  final todos = todosProvider.todos;
+                  if (todos.isEmpty) {
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -165,77 +169,80 @@ class _TodosScreenState extends State<TodosScreen> {
                           const Text('Nhấn + bên dưới để tạo công việc mới', style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                         ],
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      itemCount: todos.length,
-                      itemBuilder: (context, index) {
-                        final todo = todos[index];
-                        final priorityColor = todo.priority == 'high'
-                            ? Colors.red
-                            : (todo.priority == 'medium' ? Colors.orange : Colors.green);
+                    );
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    itemCount: todos.length,
+                    itemBuilder: (context, index) {
+                      final todo = todos[index];
+                      final priorityColor = todo.priority == 'high'
+                          ? Colors.red
+                          : (todo.priority == 'medium' ? Colors.orange : Colors.green);
 
-                        return Dismissible(
-                          key: Key(todo.id),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            decoration: BoxDecoration(
-                              color: AppColors.error,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(Icons.delete_outline, color: Colors.white),
+                      return Dismissible(
+                        key: Key(todo.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          onDismissed: (_) {
-                            todosProvider.deleteTodo(todo.id);
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.border),
+                          child: const Icon(Icons.delete_outline, color: Colors.white),
+                        ),
+                        onDismissed: (_) {
+                          context.read<TodosProvider>().deleteTodo(todo.id);
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            leading: Checkbox(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              activeColor: AppColors.primary,
+                              value: todo.isCompleted,
+                              onChanged: (val) {
+                                context.read<TodosProvider>().toggleTodo(todo.id, val ?? false);
+                              },
                             ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              leading: Checkbox(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                activeColor: AppColors.primary,
-                                value: todo.isCompleted,
-                                onChanged: (val) {
-                                  todosProvider.toggleTodo(todo.id, val ?? false);
-                                },
+                            title: Text(
+                              todo.title,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
+                                color: todo.isCompleted ? AppColors.textTertiary : AppColors.textPrimary,
                               ),
-                              title: Text(
-                                todo.title,
+                            ),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: priorityColor.withAlpha(20),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                todo.priority.toUpperCase(),
                                 style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
-                                  color: todo.isCompleted ? AppColors.textTertiary : AppColors.textPrimary,
-                                ),
-                              ),
-                              trailing: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: priorityColor.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  todo.priority.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: priorityColor,
-                                  ),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: priorityColor,
                                 ),
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

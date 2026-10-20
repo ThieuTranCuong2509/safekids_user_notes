@@ -35,12 +35,12 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Delete Note'),
-        content: Text('Are you sure you want to delete "${note.title.isNotEmpty ? note.title : 'Untitled'}"?'),
+        title: const Text('Xóa Ghi Chú'),
+        content: Text('Bạn có chắc chắn muốn xóa "${note.title.isNotEmpty ? note.title : 'Không tiêu đề'}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text('Hủy', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -51,7 +51,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
               backgroundColor: AppColors.error,
               minimumSize: const Size(80, 36),
             ),
-            child: const Text('Delete'),
+            child: const Text('Xóa'),
           ),
         ],
       ),
@@ -59,11 +59,6 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
   }
 
   Widget _buildNotesTab(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final notesProvider = context.watch<NotesProvider>();
-    final teamProvider = context.watch<TeamProvider>();
-    final notes = notesProvider.notes;
-
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       appBar: AppBar(
@@ -71,26 +66,33 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Cuong Tran Notes'),
-            if (auth.currentUser?.email != null)
-              Text(
-                auth.currentUser!.email,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
+            Consumer<AuthProvider>(
+              builder: (_, auth, _) {
+                final email = auth.currentUser?.email;
+                if (email == null) return const SizedBox.shrink();
+                return Text(
+                  email,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.normal,
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: teamProvider.canEditActiveTeam
-            ? () {
-                Navigator.pushNamed(context, AppRoutes.editor);
-              }
-            : null,
-        icon: const Icon(Icons.add),
-        label: const Text('New Note'),
+      floatingActionButton: Consumer<TeamProvider>(
+        builder: (context, teamProvider, _) {
+          return FloatingActionButton.extended(
+            onPressed: teamProvider.canEditActiveTeam
+                ? () => Navigator.pushNamed(context, AppRoutes.editor)
+                : null,
+            icon: const Icon(Icons.add),
+            label: const Text('Ghi chú mới'),
+          );
+        },
       ),
       body: SafeArea(
         child: Column(
@@ -99,77 +101,90 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: NoteSearchBar(
                 controller: _searchController,
-                onChanged: (val) => notesProvider.setSearchQuery(val),
+                onChanged: (val) => context.read<NotesProvider>().setSearchQuery(val),
                 onClear: () {
                   _searchController.clear();
-                  notesProvider.clearSearch();
+                  context.read<NotesProvider>().clearSearch();
                 },
               ),
             ),
-            if (notesProvider.errorMessage != null)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.errorBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.error.withAlpha(80)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, size: 18, color: AppColors.error),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        notesProvider.errorMessage!,
-                        style: const TextStyle(fontSize: 13, color: AppColors.error),
-                      ),
+            Consumer<NotesProvider>(
+              builder: (context, notesProvider, _) {
+                if (notesProvider.errorMessage != null) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.errorBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.error.withAlpha(80)),
                     ),
-                  ],
-                ),
-              ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, size: 18, color: AppColors.error),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            notesProvider.errorMessage!,
+                            style: const TextStyle(fontSize: 13, color: AppColors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             Expanded(
-              child: notesProvider.isLoading
-                  ? const Center(
+              child: Consumer<NotesProvider>(
+                builder: (context, notesProvider, _) {
+                  final notes = notesProvider.notes;
+                  if (notesProvider.isLoading && notes.isEmpty) {
+                    return const Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                       ),
-                    )
-                  : notes.isEmpty
-                      ? EmptyStateView(
-                          icon: _searchController.text.isNotEmpty
-                              ? Icons.search_off_rounded
-                              : Icons.sticky_note_2_outlined,
-                          title: _searchController.text.isNotEmpty
-                              ? 'No matching notes'
-                              : 'No notes yet',
-                          subtitle: _searchController.text.isNotEmpty
-                              ? 'Try searching with a different keyword.'
-                              : 'Tap the + button below to create your first real-time note.',
-                          buttonText: _searchController.text.isNotEmpty ? null : 'Create Note',
-                          onButtonPressed: () {
-                            Navigator.pushNamed(context, AppRoutes.editor);
-                          },
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          itemCount: notes.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 12),
-                          itemBuilder: (ctx, index) {
-                            final note = notes[index];
-                            return NoteCard(
-                              note: note,
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.editor,
-                                  arguments: note,
-                                );
-                              },
-                              onDelete: () => _confirmDelete(context, note),
-                            );
-                          },
-                        ),
+                    );
+                  }
+                  if (notes.isEmpty) {
+                    return EmptyStateView(
+                      icon: _searchController.text.isNotEmpty
+                          ? Icons.search_off_rounded
+                          : Icons.sticky_note_2_outlined,
+                      title: _searchController.text.isNotEmpty
+                          ? 'Không tìm thấy ghi chú'
+                          : 'Chưa có ghi chú nào',
+                      subtitle: _searchController.text.isNotEmpty
+                          ? 'Thử tìm kiếm với từ khóa khác.'
+                          : 'Nhấn nút + bên dưới để tạo ghi chú đầu tiên.',
+                      buttonText: _searchController.text.isNotEmpty ? null : 'Tạo Ghi Chú',
+                      onButtonPressed: () {
+                        Navigator.pushNamed(context, AppRoutes.editor);
+                      },
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    itemCount: notes.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (ctx, index) {
+                      final note = notes[index];
+                      return NoteCard(
+                        note: note,
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.editor,
+                            arguments: note,
+                          );
+                        },
+                        onDelete: () => _confirmDelete(context, note),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

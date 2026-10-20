@@ -259,11 +259,6 @@ class _TeamsScreenState extends State<TeamsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final teamProvider = context.watch<TeamProvider>();
-    final auth = context.watch<AuthProvider>();
-    final currentUid = auth.currentUser?.id ?? '';
-    final teams = teamProvider.teams;
-
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       appBar: AppBar(
@@ -277,8 +272,13 @@ class _TeamsScreenState extends State<TeamsScreen> {
         ],
       ),
       body: SafeArea(
-        child: teams.isEmpty
-            ? Center(
+        child: Consumer2<TeamProvider, AuthProvider>(
+          builder: (context, teamProvider, auth, _) {
+            final currentUid = auth.currentUser?.id ?? '';
+            final teams = teamProvider.teams;
+
+            if (teams.isEmpty) {
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -294,71 +294,75 @@ class _TeamsScreenState extends State<TeamsScreen> {
                     ),
                   ],
                 ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: teams.length,
-                itemBuilder: (context, index) {
-                  final team = teams[index];
-                  final role = team.getRole(currentUid);
-                  final isSelected = teamProvider.activeTeam?.id == team.id;
+              );
+            }
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.border,
-                        width: isSelected ? 2 : 1,
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: teams.length,
+              itemBuilder: (context, index) {
+                final team = teams[index];
+                final role = team.getRole(currentUid);
+                final isSelected = teamProvider.activeTeam?.id == team.id;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(10),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(10),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                    ],
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.primaryLight,
+                      child: const Icon(Icons.groups_rounded, color: AppColors.primary),
+                    ),
+                    title: Text(
+                      team.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (team.description.isNotEmpty)
+                          Text(
+                            team.description,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        const SizedBox(height: 4),
+                        Text('${team.memberIds.length} thành viên', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _roleBadge(role),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.info_outline, color: AppColors.primary),
+                          onPressed: () => _showTeamDetails(team),
                         ),
                       ],
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primaryLight,
-                        child: const Icon(Icons.groups_rounded, color: AppColors.primary),
-                      ),
-                      title: Text(
-                        team.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (team.description.isNotEmpty)
-                            Text(
-                              team.description,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                            ),
-                          const SizedBox(height: 4),
-                          Text('${team.memberIds.length} thành viên', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _roleBadge(role),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.info_outline, color: AppColors.primary),
-                            onPressed: () => _showTeamDetails(team),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

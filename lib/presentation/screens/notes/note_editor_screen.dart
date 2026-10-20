@@ -146,7 +146,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final notesProvider = context.watch<NotesProvider>();
     final bgColor = _hexToColor(_colorTag);
 
     return Scaffold(
@@ -154,7 +153,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       appBar: AppBar(
         backgroundColor: bgColor,
         elevation: 0,
-        title: Text(_isEditing ? 'Edit Note' : 'New Note'),
+        title: Text(_isEditing ? 'Chỉnh sửa' : 'Ghi chú mới'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => Navigator.pop(context),
@@ -173,28 +172,37 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               });
             },
           ),
-          if (_isEditing)
-            IconButton(
-              tooltip: 'Delete Note',
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
-              onPressed: notesProvider.isSaving ? null : _handleDelete,
-            ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: TextButton.icon(
-              onPressed: notesProvider.isSaving ? null : _handleSave,
-              icon: notesProvider.isSaving
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                    )
-                  : const Icon(Icons.check, size: 18),
-              label: Text(
-                notesProvider.isSaving ? 'Saving...' : 'Save',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
+          Consumer<NotesProvider>(
+            builder: (context, notesProvider, _) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isEditing)
+                    IconButton(
+                      tooltip: 'Xóa ghi chú',
+                      icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                      onPressed: notesProvider.isSaving ? null : _handleDelete,
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: TextButton.icon(
+                      onPressed: notesProvider.isSaving ? null : _handleSave,
+                      icon: notesProvider.isSaving
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                            )
+                          : const Icon(Icons.check, size: 18),
+                      label: Text(
+                        notesProvider.isSaving ? 'Đang lưu...' : 'Lưu',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

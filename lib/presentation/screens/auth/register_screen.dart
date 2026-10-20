@@ -45,15 +45,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () {
-            auth.clearError();
+            context.read<AuthProvider>().clearError();
             Navigator.pop(context);
           },
         ),
@@ -78,39 +76,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Start taking notes synced across your devices',
+                    'Bắt đầu tạo ghi chú và đồng bộ đám mây ngay',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  if (auth.errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.errorBg,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.error.withAlpha(80)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, size: 18, color: AppColors.error),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              auth.errorMessage!,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.error,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                  Consumer<AuthProvider>(
+                    builder: (context, auth, _) {
+                      if (auth.errorMessage != null) {
+                        return Container(
+                          margin: const EdgeInsets.only(top: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.errorBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.error.withAlpha(80)),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, size: 18, color: AppColors.error),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  auth.errorMessage!,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
                   const SizedBox(height: 24),
                   AppTextField(
                     controller: _emailController,
@@ -163,10 +166,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                   const SizedBox(height: 28),
-                  PrimaryButton(
-                    text: 'Sign Up',
-                    isLoading: auth.isLoading,
-                    onPressed: _handleRegister,
+                  Consumer<AuthProvider>(
+                    builder: (context, auth, _) {
+                      return PrimaryButton(
+                        text: 'Sign Up',
+                        isLoading: auth.isLoading,
+                        onPressed: _handleRegister,
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -181,7 +188,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          auth.clearError();
+                          context.read<AuthProvider>().clearError();
                           Navigator.pop(context);
                         },
                         child: const Text(

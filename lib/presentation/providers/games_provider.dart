@@ -13,13 +13,45 @@ class GamesProvider extends ChangeNotifier {
   List<GameScoreEntity> _topScores = [];
   bool _isLoading = false;
 
-  // Local fallback leaderboard
   final List<GameScoreEntity> _localScores = [];
 
   GamesProvider({required this.firestoreService});
 
   List<GameScoreEntity> get topScores => _topScores;
   bool get isLoading => _isLoading;
+
+  static List<GameScoreEntity> _defaultLeaderboard() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return [
+      GameScoreEntity(
+        id: 'mock_s1',
+        userId: 'user1',
+        userName: 'Cuong Tran (Pro)',
+        gameType: 'flappy_bird',
+        score: 120,
+        timeSpentSeconds: 45,
+        createdAt: now - 3600000,
+      ),
+      GameScoreEntity(
+        id: 'mock_s2',
+        userId: 'user2',
+        userName: 'Tech Master',
+        gameType: 'flappy_bird',
+        score: 80,
+        timeSpentSeconds: 32,
+        createdAt: now - 7200000,
+      ),
+      GameScoreEntity(
+        id: 'mock_s3',
+        userId: 'user3',
+        userName: 'Guest Star',
+        gameType: 'flappy_bird',
+        score: 50,
+        timeSpentSeconds: 20,
+        createdAt: now - 10000000,
+      ),
+    ];
+  }
 
   void syncUser(String? userId, String? userName) {
     _userId = userId;
@@ -33,55 +65,54 @@ class GamesProvider extends ChangeNotifier {
       return;
     }
 
+    if (_localScores.isEmpty) {
+      _localScores.addAll(_defaultLeaderboard());
+    }
+    _topScores = List.from(_localScores);
+    _isLoading = false;
+    notifyListeners();
+
     if (FirebaseConfig.isFirebaseReady) {
-      _isLoading = true;
-      notifyListeners();
-      _scoreSub = firestoreService.watchTopScores('memory_match').listen(
+      _scoreSub = firestoreService.watchTopScores('flappy_bird').listen(
         (scores) {
-          _topScores = scores;
+          if (scores.isNotEmpty) {
+            _topScores = scores;
+          }
           _isLoading = false;
           notifyListeners();
         },
         onError: (_) {
           _isLoading = false;
-          _topScores = List.from(_localScores);
+          if (_topScores.isEmpty) {
+            _topScores = List.from(_localScores);
+          }
+          notifyListeners();
+        },
+      );
+    }
+  }
+
+  void filterGame(String gameType) {
+    if (FirebaseConfig.isFirebaseReady) {
+      _scoreSub?.cancel();
+      _isLoading = true;
+      notifyListeners();
+      _scoreSub = firestoreService.watchTopScores(gameType).listen(
+        (scores) {
+          _topScores = scores.isNotEmpty
+              ? scores
+              : _localScores.where((s) => s.gameType == gameType).toList();
+          _isLoading = false;
+          notifyListeners();
+        },
+        onError: (_) {
+          _isLoading = false;
+          _topScores = _localScores.where((s) => s.gameType == gameType).toList();
           notifyListeners();
         },
       );
     } else {
-      if (_localScores.isEmpty) {
-        final now = DateTime.now().millisecondsSinceEpoch;
-        _localScores.addAll([
-          GameScoreEntity(
-            id: 'mock_s1',
-            userId: 'user1',
-            userName: 'Cuong Tran',
-            gameType: 'memory_match',
-            score: 950,
-            timeSpentSeconds: 24,
-            createdAt: now - 86400000,
-          ),
-          GameScoreEntity(
-            id: 'mock_s2',
-            userId: 'user2',
-            userName: 'Tech Master',
-            gameType: 'memory_match',
-            score: 820,
-            timeSpentSeconds: 35,
-            createdAt: now - 43200000,
-          ),
-          GameScoreEntity(
-            id: 'mock_s3',
-            userId: 'user3',
-            userName: 'Guest Star',
-            gameType: 'memory_match',
-            score: 740,
-            timeSpentSeconds: 42,
-            createdAt: now - 10000000,
-          ),
-        ]);
-      }
-      _topScores = List.from(_localScores);
+      _topScores = _localScores.where((s) => s.gameType == gameType).toList();
       notifyListeners();
     }
   }
@@ -94,31 +125,33 @@ class GamesProvider extends ChangeNotifier {
   }) async {
     if (_userId == null) return;
 
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final newScore = GameScoreEntity(
+      id: 'score_$now',
+      userId: _userId!,
+      userName: _userName,
+      gameType: gameType,
+      score: score,
+      timeSpentSeconds: timeSpentSeconds,
+      difficulty: difficulty,
+      createdAt: now,
+    );
+    _localScores.add(newScore);
+    _localScores.sort((a, b) => b.score.compareTo(a.score));
+    _topScores = _localScores.where((s) => s.gameType == gameType).toList();
+    notifyListeners();
+
     if (FirebaseConfig.isFirebaseReady) {
-      await firestoreService.recordGameScore(
-        userId: _userId!,
-        userName: _userName,
-        gameType: gameType,
-        score: score,
-        timeSpentSeconds: timeSpentSeconds,
-        difficulty: difficulty,
-      );
-    } else {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final newScore = GameScoreEntity(
-        id: 'mock_s_$now',
-        userId: _userId!,
-        userName: _userName,
-        gameType: gameType,
-        score: score,
-        timeSpentSeconds: timeSpentSeconds,
-        difficulty: difficulty,
-        createdAt: now,
-      );
-      _localScores.add(newScore);
-      _localScores.sort((a, b) => b.score.compareTo(a.score));
-      _topScores = List.from(_localScores);
-      notifyListeners();
+      try {
+        await firestoreService.recordGameScore(
+          userId: _userId!,
+          userName: _userName,
+          gameType: gameType,
+          score: score,
+          timeSpentSeconds: timeSpentSeconds,
+          difficulty: difficulty,
+        );
+      } catch (_) {}
     }
   }
 

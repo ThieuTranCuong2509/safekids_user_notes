@@ -13,11 +13,6 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final notes = context.watch<NotesProvider>();
-    final todos = context.watch<TodosProvider>();
-    final activity = context.watch<ActivityProvider>();
-
     return Scaffold(
       backgroundColor: AppColors.bgCanvas,
       appBar: AppBar(
@@ -35,79 +30,88 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           children: [
             // User Card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: AppColors.primaryLight,
-                    child: const Icon(Icons.person, size: 36, color: AppColors.primary),
+            Consumer<AuthProvider>(
+              builder: (context, auth, _) {
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          auth.currentUser?.email ?? 'user@cuongtt.vn',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'UID: ${auth.currentUser?.id ?? "local_uid"}',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'monospace'),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: FirebaseConfig.isFirebaseReady ? Colors.green.withAlpha(20) : Colors.orange.withAlpha(20),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            FirebaseConfig.isFirebaseReady ? 'Firebase Connected (cuongtt-e83bf)' : 'Dev Mock Mode',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: FirebaseConfig.isFirebaseReady ? Colors.green : Colors.orange,
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: AppColors.primaryLight,
+                        child: const Icon(Icons.person, size: 36, color: AppColors.primary),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              auth.currentUser?.email ?? 'user@cuongtt.vn',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                             ),
-                          ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'UID: ${auth.currentUser?.id ?? "local_uid"}',
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontFamily: 'monospace'),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: FirebaseConfig.isFirebaseReady ? Colors.green.withAlpha(20) : Colors.orange.withAlpha(20),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                FirebaseConfig.isFirebaseReady ? 'Firebase Connected (cuongtt-e83bf)' : 'Dev Mock Mode',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: FirebaseConfig.isFirebaseReady ? Colors.green : Colors.orange,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 20),
 
             // 6 Tables Architecture Summary Card (For Graduation Defense)
             const Text(
-              '📦 Kiến Trúc 6 Bảng Database (Firestore)',
+              '📦 Kiến Trúc 7 Bảng Database (Cloud Firestore & RBAC)',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 10),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.3,
-              children: [
-                _tableItem('1. users', 'Hồ sơ tài khoản', Icons.people_outline, Colors.blue),
-                _tableItem('2. notes', '${notes.notes.length} ghi chú', Icons.note_alt_outlined, Colors.purple),
-                _tableItem('3. categories', 'Danh mục phân loại', Icons.folder_open_rounded, Colors.indigo),
-                _tableItem('4. todos', '${todos.todos.length} công việc', Icons.checklist_rounded, Colors.teal),
-                _tableItem('5. game_scores', 'Điểm mini-games', Icons.videogame_asset_outlined, Colors.deepOrange),
-                _tableItem('6. activity_logs', '${activity.logs.length} nhật ký', Icons.history_rounded, Colors.brown),
-              ],
+            Consumer3<NotesProvider, TodosProvider, ActivityProvider>(
+              builder: (context, notes, todos, activity, _) {
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 2.3,
+                  children: [
+                    _tableItem('1. users', 'Hồ sơ tài khoản', Icons.people_outline, Colors.blue),
+                    _tableItem('2. notes', '${notes.notes.length} ghi chú', Icons.note_alt_outlined, Colors.purple),
+                    _tableItem('3. categories', 'Danh mục phân loại', Icons.folder_open_rounded, Colors.indigo),
+                    _tableItem('4. todos', '${todos.todos.length} công việc', Icons.checklist_rounded, Colors.teal),
+                    _tableItem('5. teams', 'Nhóm & phân quyền', Icons.groups_rounded, Colors.pink),
+                    _tableItem('6. game_scores', 'Điểm mini-games', Icons.videogame_asset_outlined, Colors.deepOrange),
+                    _tableItem('7. activity_logs', '${activity.logs.length} nhật ký', Icons.history_rounded, Colors.brown),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
@@ -117,44 +121,48 @@ class ProfileScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 10),
-            if (activity.logs.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: const Center(
-                  child: Text('Chưa có hoạt động nào được ghi nhận', style: TextStyle(color: AppColors.textSecondary)),
-                ),
-              )
-            else
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: activity.logs.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
-                  itemBuilder: (context, index) {
-                    final log = activity.logs[index];
-                    return ListTile(
-                      dense: true,
-                      leading: const Icon(Icons.radio_button_checked, size: 14, color: AppColors.primary),
-                      title: Text(log.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                      subtitle: Text(
-                        DateTime.fromMillisecondsSinceEpoch(log.createdAt).toString().substring(0, 16),
-                        style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-                      ),
-                    );
-                  },
-                ),
-              ),
+            Consumer<ActivityProvider>(
+              builder: (context, activity, _) {
+                if (activity.logs.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Center(
+                      child: Text('Chưa có hoạt động nào được ghi nhận', style: TextStyle(color: AppColors.textSecondary)),
+                    ),
+                  );
+                }
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: activity.logs.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                    itemBuilder: (context, index) {
+                      final log = activity.logs[index];
+                      return ListTile(
+                        dense: true,
+                        leading: const Icon(Icons.radio_button_checked, size: 14, color: AppColors.primary),
+                        title: Text(log.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        subtitle: Text(
+                          DateTime.fromMillisecondsSinceEpoch(log.createdAt).toString().substring(0, 16),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),

@@ -40,6 +40,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '102490059717',
     projectId: 'cuongtt-e83bf',
     authDomain: 'cuongtt-e83bf.firebaseapp.com',
+    databaseURL: 'https://cuongtt-e83bf-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'cuongtt-e83bf.firebasestorage.app',
   );
 
@@ -48,6 +49,7 @@ class DefaultFirebaseOptions {
     appId: '1:102490059717:android:a677457ef96241c59051ac',
     messagingSenderId: '102490059717',
     projectId: 'cuongtt-e83bf',
+    databaseURL: 'https://cuongtt-e83bf-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'cuongtt-e83bf.firebasestorage.app',
   );
 
@@ -56,6 +58,7 @@ class DefaultFirebaseOptions {
     appId: '1:102490059717:ios:abcdef123456',
     messagingSenderId: '102490059717',
     projectId: 'cuongtt-e83bf',
+    databaseURL: 'https://cuongtt-e83bf-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'cuongtt-e83bf.firebasestorage.app',
     iosBundleId: 'com.cuongtran.notes',
   );
@@ -65,6 +68,7 @@ class DefaultFirebaseOptions {
     appId: '1:102490059717:ios:abcdef123456',
     messagingSenderId: '102490059717',
     projectId: 'cuongtt-e83bf',
+    databaseURL: 'https://cuongtt-e83bf-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'cuongtt-e83bf.firebasestorage.app',
     iosBundleId: 'com.cuongtran.notes',
   );
