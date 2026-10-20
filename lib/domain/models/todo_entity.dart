@@ -5,6 +5,8 @@ class TodoEntity {
   final bool isCompleted;
   final String priority; // low, medium, high
   final int? dueDate;
+  final String? teamId;
+  final String? assigneeName;
   final int createdAt;
   final int updatedAt;
 
@@ -15,6 +17,8 @@ class TodoEntity {
     this.isCompleted = false,
     this.priority = 'medium',
     this.dueDate,
+    this.teamId,
+    this.assigneeName,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -26,6 +30,8 @@ class TodoEntity {
     'isCompleted': isCompleted,
     'priority': priority,
     'dueDate': dueDate,
+    if (teamId != null) 'teamId': teamId,
+    if (assigneeName != null) 'assigneeName': assigneeName,
     'createdAt': createdAt,
     'updatedAt': updatedAt,
   };
@@ -38,6 +44,8 @@ class TodoEntity {
       isCompleted: map['isCompleted'] == true,
       priority: map['priority']?.toString() ?? 'medium',
       dueDate: (map['dueDate'] as num?)?.toInt(),
+      teamId: map['teamId']?.toString(),
+      assigneeName: map['assigneeName']?.toString(),
       createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
       updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
     );
@@ -50,6 +58,8 @@ class TodoEntity {
     bool? isCompleted,
     String? priority,
     int? dueDate,
+    String? teamId,
+    String? assigneeName,
     int? createdAt,
     int? updatedAt,
   }) {
@@ -60,6 +70,8 @@ class TodoEntity {
       isCompleted: isCompleted ?? this.isCompleted,
       priority: priority ?? this.priority,
       dueDate: dueDate ?? this.dueDate,
+      teamId: teamId ?? this.teamId,
+      assigneeName: assigneeName ?? this.assigneeName,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -74,8 +86,9 @@ class TodoEntity {
           userId == other.userId &&
           title == other.title &&
           isCompleted == other.isCompleted &&
-          priority == other.priority;
+          priority == other.priority &&
+          teamId == other.teamId;
 
   @override
-  int get hashCode => Object.hash(id, userId, title, isCompleted, priority);
+  int get hashCode => Object.hash(id, userId, title, isCompleted, priority, teamId);
 }

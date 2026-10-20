@@ -1,107 +1,79 @@
-# Cuong Tran Notes (Cloud Firestore & Productivity Suite)
+# Cuong Tran Notes (Cloud Firestore, Teamwork RBAC & Productivity Suite)
 
-Ứng dụng ghi chú và quản lý công việc đa nền tảng (Flutter) tích hợp **Firebase Authentication** và **Cloud Firestore**, được phát triển bài bản theo mô hình Clean Architecture phục vụ cho **Đồ án tốt nghiệp**.
-
----
-
-## 📱 Thông số định danh ứng dụng (Package & Firebase Project)
-
-- **Firebase Project ID:**
-  ```text
-  cuongtt-e83bf
-  ```
-- **Android Package Name (Application ID):**
-  ```text
-  com.cuongtran.notes
-  ```
-- **iOS Bundle Identifier:**
-  ```text
-  com.cuongtran.notes
-  ```
+Ứng dụng ghi chú và làm việc nhóm đa nền tảng (Flutter) tích hợp **Firebase Authentication**, **Cloud Firestore** với tính năng **Làm việc nhóm (Teamwork) phân quyền vai trò (RBAC)** và **Khu trò chơi giải trí (Flappy Bird, Memory Match, Math Blitz)**, được thiết kế theo kiến trúc Clean Architecture phục vụ cho **Đồ án tốt nghiệp**.
 
 ---
 
-## 🗄 Kiến Trúc Database: 6 Đối Tượng / 6 Bảng (Cloud Firestore)
+## 📱 Thông số định danh ứng dụng
 
-Hệ thống cơ sở dữ liệu NoSQL trên Cloud Firestore bao gồm **6 Collections** chuyên biệt, đảm bảo tính mở rộng, bảo mật và toàn vẹn dữ liệu:
-
-1. **`users` (Hồ sơ người dùng):**
-   - Lưu trữ `id`, `email`, `displayName`, `totalNotes`, `gamesPlayed`, `highestScore`, `createdAt`, `lastLoginAt`.
-   - Quản lý trạng thái và hồ sơ cá nhân.
-
-2. **`notes` (Ghi chú Firestore):**
-   - Lưu trữ `id`, `userId`, `title`, `content`, `categoryId`, `colorTag`, `isPinned`, `isArchived`, `createdAt`, `updatedAt`.
-   - Hỗ trợ ghim lên đầu, phân loại danh mục, gắn thẻ màu sắc và đồng bộ real-time.
-
-3. **`categories` (Danh mục phân loại):**
-   - Lưu trữ `id`, `userId`, `name` (Học tập, Công việc, Cá nhân, Ý tưởng), `colorHex`, `iconName`.
-
-4. **`todos` (Nhiệm vụ & Checklist):**
-   - Lưu trữ `id`, `userId`, `title`, `isCompleted`, `priority` (low, medium, high), `dueDate`, `createdAt`, `updatedAt`.
-   - Giúp sinh viên quản lý tiến độ công việc, đồ án theo mức độ ưu tiên.
-
-5. **`game_scores` (Điểm số Mini-Games & Leaderboard):**
-   - Lưu trữ `id`, `userId`, `userName`, `gameType` (`memory_match`, `math_speed`), `score`, `timeSpentSeconds`, `difficulty`, `createdAt`.
-   - Bảng xếp hạng điểm số thời gian thực giữa các người dùng.
-
-6. **`activity_logs` (Nhật ký hoạt động hệ thống):**
-   - Lưu trữ `id`, `userId`, `action` (`create_note`, `update_note`, `delete_note`, `complete_todo`, `play_game`), `title`, `details`, `createdAt`.
-   - Phục vụ kiểm toán, hiển thị lịch sử hoạt động trực quan trong tab Hồ sơ.
+- **Firebase Project ID:** `cuongtt-e83bf`
+- **Android Package Name (Application ID):** `com.cuongtran.notes`
+- **iOS Bundle Identifier:** `com.cuongtran.notes`
+- **GitHub Repository:** [https://github.com/ThieuTranCuong2509/safekids_user_notes](https://github.com/ThieuTranCuong2509/safekids_user_notes)
 
 ---
 
-## 🎮 Khu Vực Giải Trí & Mini-Games (Relaxation Zone)
+## 👥 Tính Năng Làm Việc Nhóm & Phân Quyền Vai Trò (Teamwork & RBAC)
 
-Ứng dụng tích hợp sẵn 2 mini-games thú vị giúp người dùng giải tỏa căng thẳng:
-1. **Memory Match (Lật thẻ trí nhớ):** Trò chơi lật 12 thẻ (6 cặp biểu tượng) rèn luyện trí nhớ ngắn hạn. Tự động tính điểm dựa trên thời gian và số lượt lật.
-2. **Math Blitz (Toán nhanh 30s):** Thử thách tính nhẩm phản xạ thần tốc trong 30 giây với chuỗi combo điểm số cao.
-- **Tự động lưu điểm:** Điểm số sau mỗi ván chơi được tự động đẩy lên collection `game_scores` trên Firestore để vinh danh trên Bảng xếp hạng.
+Hệ thống hỗ trợ phân quyền người dùng theo mô hình **Role-Based Access Control (RBAC)** trong từng nhóm làm việc:
+
+| Vai trò (Role) | Quyền hạn chi tiết (Permissions) |
+| :--- | :--- |
+| **👑 Trưởng nhóm (Owner)** | Toàn quyền quản trị nhóm: Đổi tên, thêm/xóa thành viên, phân cấp vai trò (`Editor` / `Viewer`), xóa nhóm, tạo/sửa/xóa mọi ghi chú và checklist nhóm. |
+| **✏️ Biên tập viên (Editor)** | Được phép tạo mới, chỉnh sửa ghi chú dùng chung, đánh dấu hoàn thành nhiệm vụ checklist trong nhóm. Không thể xóa nhóm hoặc đổi quyền thành viên. |
+| **👁 Người xem (Viewer)** | Chỉ có quyền đọc nội dung ghi chú và theo dõi tiến độ checklist của nhóm (Read-Only). Không có quyền chỉnh sửa hay xóa. |
+
+Giao diện quản lý nhóm tại tab **Nhóm (RBAC)** cho phép thêm thành viên theo email, thay đổi vai trò linh hoạt và chuyển đổi giữa không gian cá nhân với không gian làm việc nhóm.
+
+---
+
+## 🗄 Kiến Trúc Database NoSQL (Cloud Firestore Collections)
+
+Hệ thống Firestore được tổ chức gồm **7 Collections** chuẩn mực:
+
+1. **`users`:** Hồ sơ tài khoản, thống kê số ghi chú, số ván game và điểm kỷ lục.
+2. **`teams`:** Danh sách nhóm, `ownerId`, mảng `memberIds`, bản đồ phân quyền `memberRoles` (owner, editor, viewer).
+3. **`notes`:** Ghi chú cá nhân & ghi chú nhóm (`teamId`), ghim đầu trang (`isPinned`), màu nền (`colorTag`), danh mục (`categoryId`).
+4. **`categories`:** Danh mục phân loại ghi chú (Học tập, Công việc, Cá nhân, Ý tưởng).
+5. **`todos`:** Danh sách công việc checklist cá nhân & nhóm với mức độ ưu tiên (*Cao, Vừa, Thấp*).
+6. **`game_scores`:** Bảng xếp hạng kỷ lục mini-games thời gian thực (`flappy_bird`, `memory_match`, `math_speed`).
+7. **`activity_logs`:** Nhật ký kiểm toán mọi thao tác thời gian thực trên hệ thống.
+
+---
+
+## 🎮 Khu Trò Chơi Giải Trí & Bảng Xếp Hạng (Mini-Games Zone)
+
+Tích hợp 3 trò chơi giải trí mượt mà (60 FPS) giúp thư giãn:
+1. **🐤 Flappy Bird (HOT):** Điều khiển chú chim vượt qua các đường ống cống với mô phỏng trọng lực vật lý mượt mà, ghi điểm và lưu kỷ lục.
+2. **💡 Memory Match (Lật thẻ trí nhớ):** Lật tìm 6 cặp biểu tượng tương ứng, tính điểm thông minh dựa trên số lượt lật và thời gian.
+3. **⚡ Math Blitz (Toán nhanh 30s):** Thử thách tính nhẩm phản xạ thần tốc trong 30 giây với combo chuỗi đúng.
+- **Tự động lưu điểm:** Điểm số sau mỗi ván chơi được tự động ghi nhận vào collection `game_scores` trên Firestore và hiển thị theo thứ hạng thực tế trên Leaderboard.
+
+---
+
+## ⚡ Quản Lý Trạng Thái & Hiệu Năng (State Management & Performance)
+
+- **Provider Pattern Tối Ưu:** Sử dụng `ChangeNotifierProvider` và `ChangeNotifierProxyProvider` phân tầng độc lập (`AuthProvider`, `NotesProvider`, `TodosProvider`, `TeamProvider`, `GamesProvider`, `ActivityProvider`).
+- **Giảm Thiểu Rebuild:** Phân tách widget thành các component `const`, chỉ rebuild đúng phần giao diện cần cập nhật khi dữ liệu thay đổi.
+- **Khả Năng Chống Lỗi (Zero Crash Resilience):** Tự động fallback sang In-Memory Mock Service khi mất mạng hoặc chưa cấu hình Firebase, đảm bảo app luôn chạy mượt mà 100% trong buổi chấm đồ án.
 
 ---
 
 ## 🛡 Quy Tắc Bảo Mật Firestore (`firestore.rules`)
 
-File `firestore.rules` đã được tạo sẵn tại thư mục gốc với các quy tắc bảo mật nghiêm ngặt:
-- Mỗi người dùng chỉ có quyền đọc/ghi dữ liệu của chính mình (`request.auth.uid == userId`).
-- Riêng collection `game_scores` cho phép tất cả tài khoản đã xác thực được đọc (để hiển thị Bảng xếp hạng công khai), nhưng chỉ chính chủ mới được tạo/sửa điểm của mình.
-
----
-
-## 🚀 Các Bước Hoàn Tất Kết Nối Firebase (cuongtt-e83bf)
-
-### Bước 1: Đăng ký Android App trong Project `cuongtt-e83bf`
-1. Truy cập [Firebase Console](https://console.firebase.google.com/) $\rightarrow$ Chọn project **`cuongtt-e83bf`**.
-2. Nhấn vào biểu tượng **Android** (Thêm ứng dụng).
-3. Điền Package Name:
-   ```text
-   com.cuongtran.notes
-   ```
-4. Đặt App Nickname: `Cuong Tran Notes`.
-5. Nhấn **Register app** $\rightarrow$ Tải file `google-services.json` về máy.
-6. Copy file `google-services.json` vào thư mục:
-   ```text
-   android/app/google-services.json
-   ```
-
-### Bước 2: Bật Firebase Authentication & Cloud Firestore
-1. **Authentication:**
-   - Vào mục **Build** $\rightarrow$ **Authentication** $\rightarrow$ **Sign-in method** $\rightarrow$ Bật **Email/Password** $\rightarrow$ Lưu.
-2. **Firestore Database:**
-   - Vào mục **Build** $\rightarrow$ **Firestore Database** $\rightarrow$ Nhấn **Create database**.
-   - Chọn vị trí cơ sở dữ liệu: `asia-southeast1 (Singapore)`.
-   - Vào tab **Rules**, dán toàn bộ nội dung từ file `firestore.rules` và bấm **Publish**.
+File `firestore.rules` phân quyền chặt chẽ:
+- Người dùng chỉ truy cập được dữ liệu của chính mình hoặc nhóm mà mình là thành viên (`memberIds.hasAny([request.auth.uid])`).
+- Leaderboard cho phép xem công khai giữa các tài khoản đã xác thực.
 
 ---
 
 ## 🧪 Kiểm Thử & Đảm Bảo Chất Lượng
 
-Dự án có độ phủ kiểm thử đầy đủ:
 ```bash
 flutter test
 ```
-*Kết quả:* **20/20 tests passed** (Bao gồm kiểm thử tuần tự hóa cho toàn bộ 6 thực thể dữ liệu, Auth, Notes, và Smoke Test UI).
+*Kết quả:* **21/21 tests passed!** (Đầy đủ kiểm thử tuần tự hóa, xác thực phân quyền TeamEntity, logic Auth và State).
 
-Kiểm tra cú pháp và chất lượng mã nguồn:
 ```bash
 flutter analyze
 ```

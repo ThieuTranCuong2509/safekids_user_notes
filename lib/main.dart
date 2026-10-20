@@ -13,6 +13,7 @@ import 'presentation/providers/activity_provider.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/games_provider.dart';
 import 'presentation/providers/notes_provider.dart';
+import 'presentation/providers/team_provider.dart';
 import 'presentation/providers/todos_provider.dart';
 import 'presentation/routes/app_routes.dart';
 
@@ -68,6 +69,14 @@ void main() async {
             activity ??= ActivityProvider(firestoreService: firestoreService);
             activity.syncUser(auth.currentUser?.id);
             return activity;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, TeamProvider>(
+          create: (_) => TeamProvider(firestoreService: firestoreService),
+          update: (_, auth, teams) {
+            teams ??= TeamProvider(firestoreService: firestoreService);
+            teams.syncUser(auth.currentUser?.id);
+            return teams;
           },
         ),
       ],

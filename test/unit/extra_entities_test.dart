@@ -3,6 +3,7 @@ import 'package:cuongtran_notes/domain/models/todo_entity.dart';
 import 'package:cuongtran_notes/domain/models/game_score_entity.dart';
 import 'package:cuongtran_notes/domain/models/category_entity.dart';
 import 'package:cuongtran_notes/domain/models/activity_log_entity.dart';
+import 'package:cuongtran_notes/domain/models/team_entity.dart';
 
 void main() {
   group('New Entities Serialization Tests', () {
@@ -32,7 +33,7 @@ void main() {
         id: 'g1',
         userId: 'u1',
         userName: 'Cuong Tran',
-        gameType: 'memory_match',
+        gameType: 'flappy_bird',
         score: 950,
         timeSpentSeconds: 25,
         createdAt: now,
@@ -40,7 +41,7 @@ void main() {
 
       final map = score.toMap();
       expect(map['score'], 950);
-      expect(map['gameType'], 'memory_match');
+      expect(map['gameType'], 'flappy_bird');
 
       final fromMap = GameScoreEntity.fromMap('g1', map);
       expect(fromMap, equals(score));
@@ -78,6 +79,33 @@ void main() {
 
       final fromMap = ActivityLogEntity.fromMap('l1', map);
       expect(fromMap, equals(log));
+    });
+
+    test('TeamEntity verifies roles and permissions correctly', () {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final team = TeamEntity(
+        id: 'team_1',
+        name: 'Dev Team',
+        ownerId: 'user_owner',
+        memberIds: ['user_owner', 'user_editor', 'user_viewer'],
+        memberRoles: {
+          'user_owner': 'owner',
+          'user_editor': 'editor',
+          'user_viewer': 'viewer',
+        },
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      expect(team.isOwner('user_owner'), isTrue);
+      expect(team.canEdit('user_owner'), isTrue);
+      expect(team.canEdit('user_editor'), isTrue);
+      expect(team.canEdit('user_viewer'), isFalse);
+      expect(team.getRole('unknown_user'), 'viewer');
+
+      final map = team.toMap();
+      final fromMap = TeamEntity.fromMap('team_1', map);
+      expect(fromMap, equals(team));
     });
   });
 }

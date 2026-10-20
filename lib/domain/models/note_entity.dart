@@ -7,6 +7,8 @@ class NoteEntity {
   final String colorTag;
   final bool isPinned;
   final bool isArchived;
+  final String? teamId;
+  final String? authorName;
   final int createdAt;
   final int updatedAt;
 
@@ -19,6 +21,8 @@ class NoteEntity {
     this.colorTag = '#FFFFFF',
     this.isPinned = false,
     this.isArchived = false,
+    this.teamId,
+    this.authorName,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -32,6 +36,8 @@ class NoteEntity {
     'colorTag': colorTag,
     'isPinned': isPinned,
     'isArchived': isArchived,
+    if (teamId != null) 'teamId': teamId,
+    if (authorName != null) 'authorName': authorName,
     'createdAt': createdAt,
     'updatedAt': updatedAt,
   };
@@ -46,6 +52,8 @@ class NoteEntity {
       colorTag: map['colorTag']?.toString() ?? '#FFFFFF',
       isPinned: map['isPinned'] == true,
       isArchived: map['isArchived'] == true,
+      teamId: map['teamId']?.toString(),
+      authorName: map['authorName']?.toString(),
       createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
       updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
     );
@@ -60,6 +68,8 @@ class NoteEntity {
     String? colorTag,
     bool? isPinned,
     bool? isArchived,
+    String? teamId,
+    String? authorName,
     int? createdAt,
     int? updatedAt,
   }) {
@@ -72,6 +82,8 @@ class NoteEntity {
       colorTag: colorTag ?? this.colorTag,
       isPinned: isPinned ?? this.isPinned,
       isArchived: isArchived ?? this.isArchived,
+      teamId: teamId ?? this.teamId,
+      authorName: authorName ?? this.authorName,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -90,6 +102,7 @@ class NoteEntity {
           colorTag == other.colorTag &&
           isPinned == other.isPinned &&
           isArchived == other.isArchived &&
+          teamId == other.teamId &&
           createdAt == other.createdAt &&
           updatedAt == other.updatedAt;
 
@@ -103,6 +116,7 @@ class NoteEntity {
     colorTag,
     isPinned,
     isArchived,
+    teamId,
     createdAt,
     updatedAt,
   );

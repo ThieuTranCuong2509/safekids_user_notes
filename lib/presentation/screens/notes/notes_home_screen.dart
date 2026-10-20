@@ -5,9 +5,11 @@ import '../../../core/widgets/empty_state_view.dart';
 import '../../../domain/models/note_entity.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notes_provider.dart';
+import '../../providers/team_provider.dart';
 import '../../routes/app_routes.dart';
 import '../games/games_hub_screen.dart';
 import '../profile/profile_screen.dart';
+import '../teams/teams_screen.dart';
 import '../todos/todos_screen.dart';
 import 'widgets/note_card.dart';
 import 'widgets/note_search_bar.dart';
@@ -59,6 +61,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
   Widget _buildNotesTab(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final notesProvider = context.watch<NotesProvider>();
+    final teamProvider = context.watch<TeamProvider>();
     final notes = notesProvider.notes;
 
     return Scaffold(
@@ -81,9 +84,11 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.editor);
-        },
+        onPressed: teamProvider.canEditActiveTeam
+            ? () {
+                Navigator.pushNamed(context, AppRoutes.editor);
+              }
+            : null,
         icon: const Icon(Icons.add),
         label: const Text('New Note'),
       ),
@@ -180,6 +185,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
         children: [
           _buildNotesTab(context),
           const TodosScreen(),
+          const TeamsScreen(),
           const GamesHubScreen(),
           const ProfileScreen(),
         ],
@@ -198,6 +204,10 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.checklist_rounded),
             label: 'Công việc',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.groups_rounded),
+            label: 'Nhóm (RBAC)',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.sports_esports_rounded),

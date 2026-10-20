@@ -3,6 +3,7 @@ import '../../domain/models/activity_log_entity.dart';
 import '../../domain/models/category_entity.dart';
 import '../../domain/models/game_score_entity.dart';
 import '../../domain/models/note_entity.dart';
+import '../../domain/models/team_entity.dart';
 import '../../domain/models/todo_entity.dart';
 import '../../domain/models/user_entity.dart';
 
@@ -38,7 +39,24 @@ class FirestoreService {
       final list = snapshot.docs.map((doc) {
         return NoteEntity.fromMap(doc.id, doc.data());
       }).toList();
-      // Sort pinned first, then latest updated
+      list.sort((a, b) {
+        if (a.isPinned != b.isPinned) {
+          return a.isPinned ? -1 : 1;
+        }
+        return b.updatedAt.compareTo(a.updatedAt);
+      });
+      return list;
+    });
+  }
+
+  Stream<List<NoteEntity>> watchTeamNotes(String teamId) {
+    return _notesCol
+        .where('teamId', isEqualTo: teamId)
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs.map((doc) {
+        return NoteEntity.fromMap(doc.id, doc.data());
+      }).toList();
       list.sort((a, b) {
         if (a.isPinned != b.isPinned) {
           return a.isPinned ? -1 : 1;
@@ -56,6 +74,8 @@ class FirestoreService {
     String categoryId = 'general',
     String colorTag = '#FFFFFF',
     bool isPinned = false,
+    String? teamId,
+    String? authorName,
   }) async {
     final doc = _notesCol.doc();
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -67,6 +87,8 @@ class FirestoreService {
       categoryId: categoryId,
       colorTag: colorTag,
       isPinned: isPinned,
+      teamId: teamId,
+      authorName: authorName,
       createdAt: now,
       updatedAt: now,
     );
@@ -74,7 +96,7 @@ class FirestoreService {
     await logActivity(
       userId: userId,
       action: 'create_note',
-      title: 'Created note: ${note.title.isNotEmpty ? note.title : "Untitled"}',
+      title: 'Tạo ghi chú: ${note.title.isNotEmpty ? note.title : "Không tiêu đề"}',
     );
     return note;
   }
@@ -87,6 +109,7 @@ class FirestoreService {
     String? categoryId,
     String? colorTag,
     bool? isPinned,
+    String? teamId,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final Map<String, dynamic> updateData = {
@@ -97,12 +120,13 @@ class FirestoreService {
     if (categoryId != null) updateData['categoryId'] = categoryId;
     if (colorTag != null) updateData['colorTag'] = colorTag;
     if (isPinned != null) updateData['isPinned'] = isPinned;
+    if (teamId != null) updateData['teamId'] = teamId;
 
     await _notesCol.doc(noteId).update(updateData);
     await logActivity(
       userId: userId,
       action: 'update_note',
-      title: 'Updated note: ${title.isNotEmpty ? title : "Untitled"}',
+      title: 'Cập nhật ghi chú: ${title.isNotEmpty ? title : "Không tiêu đề"}',
     );
   }
 
@@ -114,7 +138,7 @@ class FirestoreService {
     await logActivity(
       userId: userId,
       action: 'delete_note',
-      title: 'Deleted a note',
+      title: 'Xóa một ghi chú',
     );
   }
 
@@ -169,7 +193,24 @@ class FirestoreService {
       final list = snapshot.docs.map((doc) {
         return TodoEntity.fromMap(doc.id, doc.data());
       }).toList();
-      // Sort incomplete first, then by priority/createdAt
+      list.sort((a, b) {
+        if (a.isCompleted != b.isCompleted) {
+          return a.isCompleted ? 1 : -1;
+        }
+        return b.createdAt.compareTo(a.createdAt);
+      });
+      return list;
+    });
+  }
+
+  Stream<List<TodoEntity>> watchTeamTodos(String teamId) {
+    return _todosCol
+        .where('teamId', isEqualTo: teamId)
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs.map((doc) {
+        return TodoEntity.fromMap(doc.id, doc.data());
+      }).toList();
       list.sort((a, b) {
         if (a.isCompleted != b.isCompleted) {
           return a.isCompleted ? 1 : -1;
@@ -185,6 +226,8 @@ class FirestoreService {
     required String title,
     String priority = 'medium',
     int? dueDate,
+    String? teamId,
+    String? assigneeName,
   }) async {
     final doc = _todosCol.doc();
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -195,6 +238,8 @@ class FirestoreService {
       isCompleted: false,
       priority: priority,
       dueDate: dueDate,
+      teamId: teamId,
+      assigneeName: assigneeName,
       createdAt: now,
       updatedAt: now,
     );
@@ -202,7 +247,7 @@ class FirestoreService {
     await logActivity(
       userId: userId,
       action: 'create_todo',
-      title: 'Added todo: ${todo.title}',
+      title: 'Thêm công việc: ${todo.title}',
     );
     return todo;
   }
@@ -217,7 +262,7 @@ class FirestoreService {
       await logActivity(
         userId: userId,
         action: 'complete_todo',
-        title: 'Completed a task',
+        title: 'Hoàn thành công việc',
       );
     }
   }
@@ -265,14 +310,99 @@ class FirestoreService {
       createdAt: now,
     );
     await doc.set(scoreEntry.toMap());
+    final gameTitle = gameType == 'flappy_bird'
+        ? 'Flappy Bird'
+        : (gameType == 'memory_match' ? 'Memory Flip' : 'Math Blitz');
     await logActivity(
       userId: userId,
       action: 'play_game',
-      title: 'Scored $score in ${gameType == "memory_match" ? "Memory Flip" : "Math Blitz"}',
+      title: 'Đạt $score điểm trong trò chơi $gameTitle',
     );
   }
 
-  // 6. Activity Logs Collection
+  // 6. Teams & Roles Collection
+  CollectionReference<Map<String, dynamic>> get _teamsCol =>
+      _firestore.collection('teams');
+
+  Stream<List<TeamEntity>> watchUserTeams(String userId) {
+    return _teamsCol
+        .where('memberIds', arrayContains: userId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return TeamEntity.fromMap(doc.id, doc.data());
+      }).toList();
+    });
+  }
+
+  Future<TeamEntity> createTeam({
+    required String ownerId,
+    required String name,
+    String description = '',
+  }) async {
+    final doc = _teamsCol.doc();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final team = TeamEntity(
+      id: doc.id,
+      name: name.trim(),
+      description: description.trim(),
+      ownerId: ownerId,
+      memberIds: [ownerId],
+      memberRoles: {ownerId: 'owner'},
+      createdAt: now,
+      updatedAt: now,
+    );
+    await doc.set(team.toMap());
+    await logActivity(
+      userId: ownerId,
+      action: 'create_team',
+      title: 'Tạo nhóm mới: ${team.name}',
+    );
+    return team;
+  }
+
+  Future<void> updateMemberRole({
+    required String teamId,
+    required String memberId,
+    required String role, // 'owner', 'editor', 'viewer'
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _teamsCol.doc(teamId).update({
+      'memberRoles.$memberId': role,
+      'updatedAt': now,
+    });
+  }
+
+  Future<void> addMemberToTeam({
+    required String teamId,
+    required String memberId,
+    String role = 'editor',
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _teamsCol.doc(teamId).update({
+      'memberIds': FieldValue.arrayUnion([memberId]),
+      'memberRoles.$memberId': role,
+      'updatedAt': now,
+    });
+  }
+
+  Future<void> removeMemberFromTeam({
+    required String teamId,
+    required String memberId,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _teamsCol.doc(teamId).update({
+      'memberIds': FieldValue.arrayRemove([memberId]),
+      'memberRoles.$memberId': FieldValue.delete(),
+      'updatedAt': now,
+    });
+  }
+
+  Future<void> deleteTeam(String teamId) async {
+    await _teamsCol.doc(teamId).delete();
+  }
+
+  // 7. Activity Logs Collection
   CollectionReference<Map<String, dynamic>> get _logsCol =>
       _firestore.collection('activity_logs');
 

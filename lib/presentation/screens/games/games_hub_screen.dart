@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../providers/games_provider.dart';
+import 'flappy_bird_screen.dart';
 import 'memory_game_screen.dart';
 import 'math_blitz_screen.dart';
 
-class GamesHubScreen extends StatelessWidget {
+class GamesHubScreen extends StatefulWidget {
   const GamesHubScreen({super.key});
+
+  @override
+  State<GamesHubScreen> createState() => _GamesHubScreenState();
+}
+
+class _GamesHubScreenState extends State<GamesHubScreen> {
+  String _selectedGameType = 'flappy_bird';
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +43,78 @@ class GamesHubScreen extends StatelessWidget {
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
+            // Featured Flappy Bird Banner Card
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FlappyBirdScreen()),
+                );
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF29B6F6), Color(0xFF0288D1)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0288D1).withAlpha(80),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Text('🐤', style: TextStyle(fontSize: 32)),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Flappy Bird',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Chip(
+                                label: Text('HOT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                                backgroundColor: Colors.redAccent,
+                                padding: EdgeInsets.zero,
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Chạm để bay, vượt chướng ngại vật 60 FPS mượt mà',
+                            style: TextStyle(fontSize: 12, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.play_circle_fill_rounded, size: 40, color: Colors.white),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
@@ -100,6 +180,20 @@ class GamesHubScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            // Game filter tabs
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _filterChip('flappy_bird', 'Flappy Bird'),
+                  const SizedBox(width: 8),
+                  _filterChip('memory_match', 'Memory Match'),
+                  const SizedBox(width: 8),
+                  _filterChip('math_speed', 'Math Blitz'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             if (gamesProvider.isLoading)
               const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
             else if (gamesProvider.topScores.isEmpty)
@@ -150,7 +244,7 @@ class GamesHubScreen extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                       subtitle: Text(
-                        '${item.gameType == 'memory_match' ? 'Memory Flip' : 'Math Blitz'} • ${item.timeSpentSeconds}s',
+                        '${item.gameType == 'flappy_bird' ? 'Flappy Bird' : (item.gameType == 'memory_match' ? 'Memory Flip' : 'Math Blitz')} • ${item.timeSpentSeconds}s',
                         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                       trailing: Text(
@@ -168,6 +262,21 @@ class GamesHubScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _filterChip(String type, String label) {
+    final isSelected = _selectedGameType == type;
+    return ChoiceChip(
+      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : AppColors.textPrimary)),
+      selected: isSelected,
+      selectedColor: AppColors.primary,
+      backgroundColor: Colors.white,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _selectedGameType = type);
+        }
+      },
     );
   }
 }
