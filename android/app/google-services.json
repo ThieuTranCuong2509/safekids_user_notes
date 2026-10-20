@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "102490059717",
+    "project_id": "cuongtt-e83bf",
+    "storage_bucket": "cuongtt-e83bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:102490059717:android:a677457ef96241c59051ac",
+        "android_client_info": {
+          "package_name": "com.cuongtran.notes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBM2NMpUnUMTpK8EnRaLTehUoeQYezXtlk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
