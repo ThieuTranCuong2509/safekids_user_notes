@@ -177,19 +177,27 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
     );
   }
 
+  Widget _buildBody(BuildContext context) {
+    switch (_currentIndex) {
+      case 0:
+        return _buildNotesTab(context);
+      case 1:
+        return const TodosScreen();
+      case 2:
+        return const TeamsScreen();
+      case 3:
+        return const GamesHubScreen();
+      case 4:
+        return const ProfileScreen();
+      default:
+        return _buildNotesTab(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildNotesTab(context),
-          const TodosScreen(),
-          const TeamsScreen(),
-          const GamesHubScreen(),
-          const ProfileScreen(),
-        ],
-      ),
+      body: _buildBody(context),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),

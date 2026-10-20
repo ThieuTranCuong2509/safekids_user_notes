@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/models/activity_log_entity.dart';
 import '../../domain/models/category_entity.dart';
 import '../../domain/models/game_score_entity.dart';
@@ -18,13 +19,22 @@ class FirestoreService {
       _firestore.collection('users');
 
   Future<void> saveUserProfile(UserEntity user) async {
-    await _usersCol.doc(user.id).set(user.toMap(), SetOptions(merge: true));
+    try {
+      await _usersCol.doc(user.id).set(user.toMap(), SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[FirestoreService] saveUserProfile error: $e');
+    }
   }
 
   Future<UserEntity?> getUserProfile(String userId) async {
-    final doc = await _usersCol.doc(userId).get();
-    if (!doc.exists || doc.data() == null) return null;
-    return UserEntity.fromMap(doc.data()!);
+    try {
+      final doc = await _usersCol.doc(userId).get();
+      if (!doc.exists || doc.data() == null) return null;
+      return UserEntity.fromMap(doc.data()!);
+    } catch (e) {
+      debugPrint('[FirestoreService] getUserProfile error: $e');
+      return null;
+    }
   }
 
   // 2. Notes Collection
@@ -46,6 +56,9 @@ class FirestoreService {
         return b.updatedAt.compareTo(a.updatedAt);
       });
       return list;
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchNotes error (Firestore may not be created yet): $error');
+      return <NoteEntity>[];
     });
   }
 
@@ -64,6 +77,9 @@ class FirestoreService {
         return b.updatedAt.compareTo(a.updatedAt);
       });
       return list;
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchTeamNotes error: $error');
+      return <NoteEntity>[];
     });
   }
 
@@ -92,12 +108,16 @@ class FirestoreService {
       createdAt: now,
       updatedAt: now,
     );
-    await doc.set(note.toMap());
-    await logActivity(
-      userId: userId,
-      action: 'create_note',
-      title: 'Tạo ghi chú: ${note.title.isNotEmpty ? note.title : "Không tiêu đề"}',
-    );
+    try {
+      await doc.set(note.toMap());
+      await logActivity(
+        userId: userId,
+        action: 'create_note',
+        title: 'Tạo ghi chú: ${note.title.isNotEmpty ? note.title : "Không tiêu đề"}',
+      );
+    } catch (e) {
+      debugPrint('[FirestoreService] createNote error: $e');
+    }
     return note;
   }
 
@@ -122,24 +142,32 @@ class FirestoreService {
     if (isPinned != null) updateData['isPinned'] = isPinned;
     if (teamId != null) updateData['teamId'] = teamId;
 
-    await _notesCol.doc(noteId).update(updateData);
-    await logActivity(
-      userId: userId,
-      action: 'update_note',
-      title: 'Cập nhật ghi chú: ${title.isNotEmpty ? title : "Không tiêu đề"}',
-    );
+    try {
+      await _notesCol.doc(noteId).update(updateData);
+      await logActivity(
+        userId: userId,
+        action: 'update_note',
+        title: 'Cập nhật ghi chú: ${title.isNotEmpty ? title : "Không tiêu đề"}',
+      );
+    } catch (e) {
+      debugPrint('[FirestoreService] updateNote error: $e');
+    }
   }
 
   Future<void> deleteNote({
     required String userId,
     required String noteId,
   }) async {
-    await _notesCol.doc(noteId).delete();
-    await logActivity(
-      userId: userId,
-      action: 'delete_note',
-      title: 'Xóa một ghi chú',
-    );
+    try {
+      await _notesCol.doc(noteId).delete();
+      await logActivity(
+        userId: userId,
+        action: 'delete_note',
+        title: 'Xóa một ghi chú',
+      );
+    } catch (e) {
+      debugPrint('[FirestoreService] deleteNote error: $e');
+    }
   }
 
   // 3. Categories Collection
@@ -154,6 +182,9 @@ class FirestoreService {
       return snapshot.docs.map((doc) {
         return CategoryEntity.fromMap(doc.id, doc.data());
       }).toList();
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchCategories error: $error');
+      return <CategoryEntity>[];
     });
   }
 
@@ -173,12 +204,20 @@ class FirestoreService {
       iconName: iconName,
       createdAt: now,
     );
-    await doc.set(cat.toMap());
+    try {
+      await doc.set(cat.toMap());
+    } catch (e) {
+      debugPrint('[FirestoreService] createCategory error: $e');
+    }
     return cat;
   }
 
   Future<void> deleteCategory(String categoryId) async {
-    await _categoriesCol.doc(categoryId).delete();
+    try {
+      await _categoriesCol.doc(categoryId).delete();
+    } catch (e) {
+      debugPrint('[FirestoreService] deleteCategory error: $e');
+    }
   }
 
   // 4. Todos Collection
@@ -200,6 +239,9 @@ class FirestoreService {
         return b.createdAt.compareTo(a.createdAt);
       });
       return list;
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchTodos error: $error');
+      return <TodoEntity>[];
     });
   }
 
@@ -218,6 +260,9 @@ class FirestoreService {
         return b.createdAt.compareTo(a.createdAt);
       });
       return list;
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchTeamTodos error: $error');
+      return <TodoEntity>[];
     });
   }
 
@@ -243,32 +288,44 @@ class FirestoreService {
       createdAt: now,
       updatedAt: now,
     );
-    await doc.set(todo.toMap());
-    await logActivity(
-      userId: userId,
-      action: 'create_todo',
-      title: 'Thêm công việc: ${todo.title}',
-    );
+    try {
+      await doc.set(todo.toMap());
+      await logActivity(
+        userId: userId,
+        action: 'create_todo',
+        title: 'Thêm công việc: ${todo.title}',
+      );
+    } catch (e) {
+      debugPrint('[FirestoreService] createTodo error: $e');
+    }
     return todo;
   }
 
   Future<void> toggleTodo(String todoId, bool isCompleted, String userId) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _todosCol.doc(todoId).update({
-      'isCompleted': isCompleted,
-      'updatedAt': now,
-    });
-    if (isCompleted) {
-      await logActivity(
-        userId: userId,
-        action: 'complete_todo',
-        title: 'Hoàn thành công việc',
-      );
+    try {
+      await _todosCol.doc(todoId).update({
+        'isCompleted': isCompleted,
+        'updatedAt': now,
+      });
+      if (isCompleted) {
+        await logActivity(
+          userId: userId,
+          action: 'complete_todo',
+          title: 'Hoàn thành công việc',
+        );
+      }
+    } catch (e) {
+      debugPrint('[FirestoreService] toggleTodo error: $e');
     }
   }
 
   Future<void> deleteTodo(String todoId) async {
-    await _todosCol.doc(todoId).delete();
+    try {
+      await _todosCol.doc(todoId).delete();
+    } catch (e) {
+      debugPrint('[FirestoreService] deleteTodo error: $e');
+    }
   }
 
   // 5. Game Scores (Leaderboard) Collection
@@ -286,6 +343,9 @@ class FirestoreService {
       }).toList();
       list.sort((a, b) => b.score.compareTo(a.score));
       return list;
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchTopScores error: $error');
+      return <GameScoreEntity>[];
     });
   }
 
@@ -309,15 +369,19 @@ class FirestoreService {
       difficulty: difficulty,
       createdAt: now,
     );
-    await doc.set(scoreEntry.toMap());
-    final gameTitle = gameType == 'flappy_bird'
-        ? 'Flappy Bird'
-        : (gameType == 'memory_match' ? 'Memory Flip' : 'Math Blitz');
-    await logActivity(
-      userId: userId,
-      action: 'play_game',
-      title: 'Đạt $score điểm trong trò chơi $gameTitle',
-    );
+    try {
+      await doc.set(scoreEntry.toMap());
+      final gameTitle = gameType == 'flappy_bird'
+          ? 'Flappy Bird'
+          : (gameType == 'memory_match' ? 'Memory Flip' : 'Math Blitz');
+      await logActivity(
+        userId: userId,
+        action: 'play_game',
+        title: 'Đạt $score điểm trong trò chơi $gameTitle',
+      );
+    } catch (e) {
+      debugPrint('[FirestoreService] recordGameScore error: $e');
+    }
   }
 
   // 6. Teams & Roles Collection
@@ -332,6 +396,9 @@ class FirestoreService {
       return snapshot.docs.map((doc) {
         return TeamEntity.fromMap(doc.id, doc.data());
       }).toList();
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchUserTeams error: $error');
+      return <TeamEntity>[];
     });
   }
 
@@ -352,12 +419,16 @@ class FirestoreService {
       createdAt: now,
       updatedAt: now,
     );
-    await doc.set(team.toMap());
-    await logActivity(
-      userId: ownerId,
-      action: 'create_team',
-      title: 'Tạo nhóm mới: ${team.name}',
-    );
+    try {
+      await doc.set(team.toMap());
+      await logActivity(
+        userId: ownerId,
+        action: 'create_team',
+        title: 'Tạo nhóm mới: ${team.name}',
+      );
+    } catch (e) {
+      debugPrint('[FirestoreService] createTeam error: $e');
+    }
     return team;
   }
 
@@ -367,10 +438,14 @@ class FirestoreService {
     required String role, // 'owner', 'editor', 'viewer'
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _teamsCol.doc(teamId).update({
-      'memberRoles.$memberId': role,
-      'updatedAt': now,
-    });
+    try {
+      await _teamsCol.doc(teamId).update({
+        'memberRoles.$memberId': role,
+        'updatedAt': now,
+      });
+    } catch (e) {
+      debugPrint('[FirestoreService] updateMemberRole error: $e');
+    }
   }
 
   Future<void> addMemberToTeam({
@@ -379,11 +454,15 @@ class FirestoreService {
     String role = 'editor',
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _teamsCol.doc(teamId).update({
-      'memberIds': FieldValue.arrayUnion([memberId]),
-      'memberRoles.$memberId': role,
-      'updatedAt': now,
-    });
+    try {
+      await _teamsCol.doc(teamId).update({
+        'memberIds': FieldValue.arrayUnion([memberId]),
+        'memberRoles.$memberId': role,
+        'updatedAt': now,
+      });
+    } catch (e) {
+      debugPrint('[FirestoreService] addMemberToTeam error: $e');
+    }
   }
 
   Future<void> removeMemberFromTeam({
@@ -391,15 +470,23 @@ class FirestoreService {
     required String memberId,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _teamsCol.doc(teamId).update({
-      'memberIds': FieldValue.arrayRemove([memberId]),
-      'memberRoles.$memberId': FieldValue.delete(),
-      'updatedAt': now,
-    });
+    try {
+      await _teamsCol.doc(teamId).update({
+        'memberIds': FieldValue.arrayRemove([memberId]),
+        'memberRoles.$memberId': FieldValue.delete(),
+        'updatedAt': now,
+      });
+    } catch (e) {
+      debugPrint('[FirestoreService] removeMemberFromTeam error: $e');
+    }
   }
 
   Future<void> deleteTeam(String teamId) async {
-    await _teamsCol.doc(teamId).delete();
+    try {
+      await _teamsCol.doc(teamId).delete();
+    } catch (e) {
+      debugPrint('[FirestoreService] deleteTeam error: $e');
+    }
   }
 
   // 7. Activity Logs Collection
@@ -417,6 +504,9 @@ class FirestoreService {
       }).toList();
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
+    }).handleError((error) {
+      debugPrint('[FirestoreService] watchActivityLogs error: $error');
+      return <ActivityLogEntity>[];
     });
   }
 
@@ -436,6 +526,10 @@ class FirestoreService {
       details: details,
       createdAt: now,
     );
-    await doc.set(log.toMap());
+    try {
+      await doc.set(log.toMap());
+    } catch (e) {
+      debugPrint('[FirestoreService] logActivity error: $e');
+    }
   }
 }
