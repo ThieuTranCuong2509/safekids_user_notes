@@ -77,9 +77,14 @@ class FirebaseAuthService {
       case 'invalid-email':
         return Exception('The email address is badly formatted.');
       case 'network-request-failed':
-        return Exception('Network connection failed. Please check your internet.');
+        return Exception('Lỗi kết nối mạng. Vui lòng kiểm tra lại đường truyền.');
+      case 'configuration-not-found':
+        return Exception('Chưa kích hoạt Authentication trên Firebase Console! Vào Build > Authentication > Sign-in method và bật Email/Password.');
       default:
-        return Exception(e.message ?? 'Authentication error occurred.');
+        if (e.message != null && e.message!.contains('CONFIGURATION_NOT_FOUND')) {
+          return Exception('Chưa bật Email/Password trên Firebase Console (cuongtt-e83bf)! Vào Build > Authentication > Sign-in method và bật Email/Password.');
+        }
+        return Exception(e.message ?? 'Đã xảy ra lỗi xác thực.');
     }
   }
 }
