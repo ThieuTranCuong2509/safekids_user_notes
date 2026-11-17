@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/models/activity_log_entity.dart';
 import '../../domain/models/category_entity.dart';
+import '../../domain/models/chat_message_entity.dart';
 import '../../domain/models/game_score_entity.dart';
 import '../../domain/models/note_entity.dart';
 import '../../domain/models/team_entity.dart';
@@ -23,6 +24,36 @@ class FirestoreService {
       await _usersCol.doc(user.id).set(user.toMap(), SetOptions(merge: true));
     } catch (e) {
       debugPrint('[FirestoreService] saveUserProfile error: $e');
+    }
+  }
+
+  Future<void> updateUser2FA(String userId, bool isEnabled, String? pin) async {
+    try {
+      await _usersCol.doc(userId).set({
+        'isTwoFactorEnabled': isEnabled,
+        'twoFactorPin': pin,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[FirestoreService] updateUser2FA error: $e');
+    }
+  }
+
+  Stream<List<UserEntity>> watchUsers() {
+    return _usersCol.snapshots().map((snap) {
+      return snap.docs.map((d) => UserEntity.fromMap(d.data())).toList();
+    }).handleError((e) {
+      debugPrint('[FirestoreService] watchUsers error: $e');
+      return <UserEntity>[];
+    });
+  }
+
+  Future<List<UserEntity>> getAllUsers() async {
+    try {
+      final snap = await _usersCol.limit(50).get();
+      return snap.docs.map((d) => UserEntity.fromMap(d.data())).toList();
+    } catch (e) {
+      debugPrint('[FirestoreService] getAllUsers error: $e');
+      return [];
     }
   }
 
@@ -530,6 +561,93 @@ class FirestoreService {
       await doc.set(log.toMap());
     } catch (e) {
       debugPrint('[FirestoreService] logActivity error: $e');
+    }
+  }
+
+  // 8. Messages Collection (Realtime Chat)
+  CollectionReference<Map<String, dynamic>> get _messagesCol =>
+      _firestore.collection('messages');
+
+  Stream<List<ChatMessageEntity>> watchPublicMessages() {
+    return _messagesCol
+        .where('receiverId', isEqualTo: 'public')
+        .snapshots()
+        .map((snap) {
+      final list = snap.docs.map((doc) => ChatMessageEntity.fromMap(doc.id, doc.data())).toList();
+      list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return list;
+    }).handleError((e) {
+      debugPrint('[FirestoreService] watchPublicMessages error: $e');
+      return <ChatMessageEntity>[];
+    });
+  }
+
+  Stream<List<ChatMessageEntity>> watchDirectMessages(String currentUserId, String otherUserId) {
+    return _messagesCol
+        .snapshots()
+        .map((snap) {
+      final list = snap.docs
+          .map((doc) => ChatMessageEntity.fromMap(doc.id, doc.data()))
+          .where((m) =>
+              (m.senderId == currentUserId && m.receiverId == otherUserId) ||
+              (m.senderId == otherUserId && m.receiverId == currentUserId))
+          .toList();
+      list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return list;
+    }).handleError((e) {
+      debugPrint('[FirestoreService] watchDirectMessages error: $e');
+      return <ChatMessageEntity>[];
+    });
+  }
+
+  Future<ChatMessageEntity> sendChatMessage({
+    required String senderId,
+    required String senderEmail,
+    required String senderName,
+    String? receiverId,
+    String? receiverName,
+    required String text,
+  }) async {
+    final doc = _messagesCol.doc();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final message = ChatMessageEntity(
+      id: doc.id,
+      senderId: senderId,
+      senderEmail: senderEmail,
+      senderName: senderName,
+      receiverId: receiverId ?? 'public',
+      receiverName: receiverName,
+      text: text.trim(),
+      createdAt: now,
+      isRead: false,
+    );
+    try {
+      await doc.set(message.toMap());
+      await logActivity(
+        userId: senderId,
+        action: 'send_message',
+        title: receiverId == null || receiverId == 'public'
+            ? 'Gửi tin nhắn trong Kênh Cộng Đồng'
+            : 'Gửi tin nhắn trực tiếp cho ${receiverName ?? "người dùng"}',
+      );
+    } catch (e) {
+      debugPrint('[FirestoreService] sendChatMessage error: $e');
+    }
+    return message;
+  }
+
+  // 9. Generic Collection Records Reader (For Database Table Inspector)
+  Future<List<Map<String, dynamic>>> getCollectionRecords(String collectionName, {int limit = 50}) async {
+    try {
+      final snap = await _firestore.collection(collectionName).limit(limit).get();
+      return snap.docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['_docId'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      debugPrint('[FirestoreService] getCollectionRecords error for $collectionName: $e');
+      return [];
     }
   }
 }

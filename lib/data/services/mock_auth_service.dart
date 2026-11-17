@@ -67,6 +67,15 @@ class MockAuthService {
     return _currentUser!;
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) {
+      throw Exception('Vui lòng nhập địa chỉ email hợp lệ.');
+    }
+    // Simulate success
+  }
+
   Future<void> logout() async {
     await Future.delayed(const Duration(milliseconds: 150));
     _currentUser = null;

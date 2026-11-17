@@ -7,6 +7,8 @@ class UserEntity {
   final int highestScore;
   final int createdAt;
   final int lastLoginAt;
+  final bool isTwoFactorEnabled;
+  final String? twoFactorPin;
 
   const UserEntity({
     required this.id,
@@ -17,6 +19,8 @@ class UserEntity {
     this.highestScore = 0,
     this.createdAt = 0,
     this.lastLoginAt = 0,
+    this.isTwoFactorEnabled = false,
+    this.twoFactorPin,
   });
 
   Map<String, dynamic> toMap() => {
@@ -28,6 +32,8 @@ class UserEntity {
     'highestScore': highestScore,
     'createdAt': createdAt,
     'lastLoginAt': lastLoginAt,
+    'isTwoFactorEnabled': isTwoFactorEnabled,
+    'twoFactorPin': twoFactorPin,
   };
 
   factory UserEntity.fromMap(Map<String, dynamic> map) => UserEntity(
@@ -39,6 +45,8 @@ class UserEntity {
     highestScore: (map['highestScore'] as num?)?.toInt() ?? 0,
     createdAt: (map['createdAt'] as num?)?.toInt() ?? 0,
     lastLoginAt: (map['lastLoginAt'] as num?)?.toInt() ?? 0,
+    isTwoFactorEnabled: map['isTwoFactorEnabled'] as bool? ?? false,
+    twoFactorPin: map['twoFactorPin'] as String?,
   );
 
   UserEntity copyWith({
@@ -50,6 +58,8 @@ class UserEntity {
     int? highestScore,
     int? createdAt,
     int? lastLoginAt,
+    bool? isTwoFactorEnabled,
+    String? twoFactorPin,
   }) => UserEntity(
     id: id ?? this.id,
     email: email ?? this.email,
@@ -59,6 +69,8 @@ class UserEntity {
     highestScore: highestScore ?? this.highestScore,
     createdAt: createdAt ?? this.createdAt,
     lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+    isTwoFactorEnabled: isTwoFactorEnabled ?? this.isTwoFactorEnabled,
+    twoFactorPin: twoFactorPin ?? this.twoFactorPin,
   );
 
   @override
@@ -71,8 +83,19 @@ class UserEntity {
           displayName == other.displayName &&
           totalNotes == other.totalNotes &&
           gamesPlayed == other.gamesPlayed &&
-          highestScore == other.highestScore;
+          highestScore == other.highestScore &&
+          isTwoFactorEnabled == other.isTwoFactorEnabled &&
+          twoFactorPin == other.twoFactorPin;
 
   @override
-  int get hashCode => Object.hash(id, email, displayName, totalNotes, gamesPlayed, highestScore);
+  int get hashCode => Object.hash(
+        id,
+        email,
+        displayName,
+        totalNotes,
+        gamesPlayed,
+        highestScore,
+        isTwoFactorEnabled,
+        twoFactorPin,
+      );
 }

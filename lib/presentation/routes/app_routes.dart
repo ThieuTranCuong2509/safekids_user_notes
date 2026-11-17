@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/models/note_entity.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/chat/chat_screen.dart';
 import '../screens/notes/note_editor_screen.dart';
 import '../screens/notes/notes_home_screen.dart';
 import '../screens/splash_screen.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String home = '/home';
   static const String editor = '/editor';
+  static const String chat = '/chat';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -25,6 +27,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
       case home:
         return MaterialPageRoute(builder: (_) => const NotesHomeScreen());
+      case chat:
+        return MaterialPageRoute(builder: (_) => const ChatScreen());
       case editor:
         final note = settings.arguments as NoteEntity?;
         return MaterialPageRoute(

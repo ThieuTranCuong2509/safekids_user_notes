@@ -86,5 +86,31 @@ void main() {
       expect(authProvider.currentUser, isNull);
       expect(authProvider.status, AuthStatus.unauthenticated);
     });
+
+    test('sendPasswordResetEmail handles valid and empty email', () async {
+      final success = await authProvider.sendPasswordResetEmail('demo@cuongtran.notes');
+      expect(success, isTrue);
+
+      final failed = await authProvider.sendPasswordResetEmail('');
+      expect(failed, isFalse);
+      expect(authProvider.errorMessage, isNotNull);
+    });
+
+    test('2FA enable and disable updates currentUser status', () async {
+      await authProvider.login(
+        email: 'demo@cuongtran.notes',
+        password: 'password123',
+      );
+
+      expect(authProvider.currentUser?.isTwoFactorEnabled, isFalse);
+
+      await authProvider.enableTwoFactor('654321');
+      expect(authProvider.currentUser?.isTwoFactorEnabled, isTrue);
+      expect(authProvider.currentUser?.twoFactorPin, '654321');
+
+      await authProvider.disableTwoFactor();
+      expect(authProvider.currentUser?.isTwoFactorEnabled, isFalse);
+      expect(authProvider.currentUser?.twoFactorPin, isNull);
+    });
   });
 }

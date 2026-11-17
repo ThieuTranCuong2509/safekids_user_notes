@@ -11,6 +11,7 @@ import 'domain/repositories/i_auth_repository.dart';
 import 'domain/repositories/i_notes_repository.dart';
 import 'presentation/providers/activity_provider.dart';
 import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/chat_provider.dart';
 import 'presentation/providers/games_provider.dart';
 import 'presentation/providers/notes_provider.dart';
 import 'presentation/providers/team_provider.dart';
@@ -37,7 +38,10 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>(
-          create: (_) => AuthProvider(authRepository: authRepository),
+          create: (_) => AuthProvider(
+            authRepository: authRepository,
+            firestoreService: firestoreService,
+          ),
         ),
         ChangeNotifierProxyProvider<AuthProvider, NotesProvider>(
           create: (_) => NotesProvider(notesRepository: notesRepository),
@@ -77,6 +81,14 @@ void main() async {
             teams ??= TeamProvider(firestoreService: firestoreService);
             teams.syncUser(auth.currentUser?.id);
             return teams;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
+          create: (_) => ChatProvider(firestoreService: firestoreService),
+          update: (_, auth, chat) {
+            chat ??= ChatProvider(firestoreService: firestoreService);
+            chat.syncUser(auth.currentUser);
+            return chat;
           },
         ),
       ],

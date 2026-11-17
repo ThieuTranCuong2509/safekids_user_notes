@@ -56,6 +56,15 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
+  Future<void> sendPasswordResetEmail(String email) {
+    final fb = _activeFirebase;
+    if (fb != null) {
+      return fb.sendPasswordResetEmail(email);
+    }
+    return mockService.sendPasswordResetEmail(email);
+  }
+
+  @override
   Future<void> logout() {
     final fb = _activeFirebase;
     if (fb != null) {

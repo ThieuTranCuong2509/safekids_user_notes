@@ -8,6 +8,7 @@ import '../../providers/notes_provider.dart';
 import '../../providers/team_provider.dart';
 import '../../routes/app_routes.dart';
 import '../games/games_hub_screen.dart';
+import '../chat/chat_screen.dart';
 import '../profile/profile_screen.dart';
 import '../teams/teams_screen.dart';
 import '../todos/todos_screen.dart';
@@ -65,7 +66,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Cuong Tran Notes'),
+            const Text('SafeKids Cloud Notes'),
             Consumer<AuthProvider>(
               builder: (_, auth, _) {
                 final email = auth.currentUser?.email;
@@ -82,6 +83,13 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Trò chuyện',
+            icon: const Icon(Icons.forum_outlined, color: AppColors.primary),
+            onPressed: () => setState(() => _currentIndex = 3),
+          ),
+        ],
       ),
       floatingActionButton: Consumer<TeamProvider>(
         builder: (context, teamProvider, _) {
@@ -201,8 +209,10 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
       case 2:
         return const TeamsScreen();
       case 3:
-        return const GamesHubScreen();
+        return const ChatScreen();
       case 4:
+        return const GamesHubScreen();
+      case 5:
         return const ProfileScreen();
       default:
         return _buildNotesTab(context);
@@ -219,6 +229,8 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.notes_rounded),
@@ -230,14 +242,21 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.groups_rounded),
-            label: 'Nhóm (RBAC)',
+            label: 'Nhóm',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.sports_esports_rounded),
+            icon: Icon(Icons.forum_outlined),
+            activeIcon: Icon(Icons.forum_rounded),
+            label: 'Trò chuyện',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports_outlined),
+            activeIcon: Icon(Icons.sports_esports_rounded),
             label: 'Giải trí',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline_rounded),
+            activeIcon: Icon(Icons.person_rounded),
             label: 'Hồ sơ',
           ),
         ],
